@@ -1,5 +1,6 @@
 ﻿#define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <windows.h>
 #include <winsock2.h>
@@ -45,25 +46,45 @@ int main()
 		printf("connect 连接套接字成功\n");
 	}
 
-	// 3. 接收服务器信息
-
-	// 如果 recv 函数调用成功，返回接受的数据大小，这个值小于等于参数 len。
-	// 当 len 非零时，如果 recv 返回 0，说明连接的另外一端发送了一个 FIN 数据包，承诺没有更多需要发送的数据。
-	// 当 len 为零时，如果 recv 返回 0，说明 socket 上有可以读的数据。
-	// 当有很多 socket 在使用时，这是检查是否有数据到来而不需要占用单独缓冲区的一个简便方法。
-	// 当 recv 函数已经表明有可用的数据时，你可以保留一个缓冲区，然后再次调用 recv 函数，输入这个缓冲区和非零的 len。
-	// 默认情况下，如果 socket 的接收缓冲区中没有数据，recv 函数阻塞调用线程，直到数据流的下一组数据到达，或者超时。
-	char recvBuf[256] = {};
-	int nlen = recv(_sock, recvBuf, 256, 0);
-	if (nlen > 0)
+	while (true)
 	{
-		printf("接收到数据：%s", recvBuf);
+		// 3. 输入请求命令
+		char cmdBuf[128] = {};
+		scanf("%s", cmdBuf);
+
+		// 4. 处理请求
+		// 如果输入 exit 则退出客户端程序
+		if (0 == strcmp(cmdBuf, "exit"))
+		{
+			break;
+		}
+		else
+		{
+			// 5. 向服务端发送请求
+			send(_sock, cmdBuf, strlen(cmdBuf) + 1, 0);
+		}
+
+		// 6. 接收服务器信息
+
+		// 如果 recv 函数调用成功，返回接受的数据大小，这个值小于等于参数 len。
+		// 当 len 非零时，如果 recv 返回 0，说明连接的另外一端发送了一个 FIN 数据包，承诺没有更多需要发送的数据。
+		// 当 len 为零时，如果 recv 返回 0，说明 socket 上有可以读的数据。
+		// 当有很多 socket 在使用时，这是检查是否有数据到来而不需要占用单独缓冲区的一个简便方法。
+		// 当 recv 函数已经表明有可用的数据时，你可以保留一个缓冲区，然后再次调用 recv 函数，输入这个缓冲区和非零的 len。
+		// 默认情况下，如果 socket 的接收缓冲区中没有数据，recv 函数阻塞调用线程，直到数据流的下一组数据到达，或者超时。
+		char recvBuf[256] = {};
+		int nlen = recv(_sock, recvBuf, 128, 0);
+		if (nlen > 0)
+		{
+			printf("接收到数据：%s\n", recvBuf);
+		}
 	}
 
-	// 4. 关闭套接字 socket
+	// 7. 关闭套接字 socket
 	closesocket(_sock);
 
 	WSACleanup();
+	printf("客户端已退出，任务结束。");
 	// 防止命令行窗口执行完就关闭
 	getchar();
 	return 0;

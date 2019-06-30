@@ -1,5 +1,6 @@
 ﻿#define WIN32_LEAN_AND_MEAN
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <windows.h>
 #include <winsock2.h>
@@ -80,33 +81,64 @@ int main()
 	sockaddr_in clientAddr = {};
 	int nAddrLen = sizeof(sockaddr_in);
 	SOCKET _recvSock;
-	char msgBuf[] = "Hello, I'm Server";
+
+	// addr 是指向 sockaddr 结构体的指针，它不能控制接收哪个连接，能做的只是存储请求连接的远程主机的地址。
+	// addrlen 是指向 addr 缓冲区大小的指针，以字节为单位。当真正写入地址之后，accept 函数将更新这个参数。
+	_recvSock = accept(_sock, (sockaddr*)& clientAddr, &nAddrLen);
+	if (INVALID_SOCKET == _recvSock)
+	{
+		printf("Error: accept 接收到无效 socket\n");
+	}
+	printf("新客户端加入：Socket = %d, IP = %s \n", (int)_recvSock, inet_ntoa(clientAddr.sin_addr));
+
+	// 接收缓存区
+	char _recvBuf[128] = {};
+
 	// 不断接收连接
 	while (true)
 	{
-		// addr 是指向 sockaddr 结构体的指针，它不能控制接收哪个连接，能做的只是存储请求连接的远程主机的地址。
-		// addrlen 是指向 addr 缓冲区大小的指针，以字节为单位。当真正写入地址之后，accept 函数将更新这个参数。
-		_recvSock = accept(_sock, (sockaddr*)& clientAddr, &nAddrLen);
-		if (INVALID_SOCKET == _recvSock)
+		// 5. 接收客户端数据，接收的 socket 是客户端提供的 socket
+		int nLen = recv(_recvSock, _recvBuf, 128, 0);
+		// 当 len 非零时，如果 recv 返回 0，说明连接的另外一端发送了一个 FIN 数据包，承诺没有更多需要发送的数据。
+		if (nLen <= 0)
 		{
-			printf("Error: accept 接收到无效 socket\n");
+			printf("客户端已退出，结束接收连接的循环。\n");
+			break;
 		}
-		printf("新客户端加入：IP = %s \n", inet_ntoa(clientAddr.sin_addr));
+		printf("接收到：%s\n", _recvBuf);
 
-		// 5. send 向客户端发送一条数据
+		// 6. 处理请求
+		// strcmp 函数比较两个字符串是否相等，相等返回 0
+		if (0 == strcmp(_recvBuf, "getName"))
+		{
+			char msgBuf[] = "Frankorz";
+			send(_recvSock, msgBuf, strlen(msgBuf) + 1, 0);
+		}
+		else if (0 == strcmp(_recvBuf, "getAge"))
+		{
+			char msgBuf[] = "25";
+			send(_recvSock, msgBuf, strlen(msgBuf) + 1, 0);
+		}
+		else
+		{
+			// 7. send 向客户端发送一条数据
 
-		// 连接的 TCP socket 存储远程主机的地址信息。因此，进程不需要为传输数据的函数传入地址参数，可以直接用 send 函数通过 socket 发送数据。
-		// 第二个参数 buf 是写入缓冲区。将数据放到输出缓冲区中，socket 库来决定在将来某一时间发送出去。
-		// len 是传输的字节数量。只要 socket 的输出缓冲区有空间，网络库就可以将数据放到缓冲区中，然后等到缓冲区数据块大小合适时再发送出去。+ 1 包括结尾符。
-		// flags 是对控制数据发送标志进行按位或运算的结果。大多数游戏代码中，该参数取值为 0。
-		// 注意这里没有判断返回值，数据有可能没有完全发送，会在之后的示例进行相应的处理。
-		
-		send(_recvSock, msgBuf, strlen(msgBuf) + 1, 0);
+			// 连接的 TCP socket 存储远程主机的地址信息。因此，进程不需要为传输数据的函数传入地址参数，可以直接用 send 函数通过 socket 发送数据。
+			// 第二个参数 buf 是写入缓冲区。将数据放到输出缓冲区中，socket 库来决定在将来某一时间发送出去。
+			// len 是传输的字节数量。只要 socket 的输出缓冲区有空间，网络库就可以将数据放到缓冲区中，然后等到缓冲区数据块大小合适时再发送出去。+ 1 包括结尾符。
+			// flags 是对控制数据发送标志进行按位或运算的结果。大多数游戏代码中，该参数取值为 0。
+			// 如果没有判断返回值，数据有可能没有完全发送。
+			char msgBuf[] = "Hello, I'm Server";
+			send(_recvSock, msgBuf, strlen(msgBuf) + 1, 0);
+		}
 	}
 
-	// 6. 关闭套接字 Socket
+	// 8. 关闭套接字 Socket
 	closesocket(_sock);
 
 	WSACleanup();
+
+	printf("服务端已退出，任务结束。");
+	getchar();
 	return 0;
 }
