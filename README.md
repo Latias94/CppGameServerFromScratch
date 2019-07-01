@@ -16,7 +16,11 @@ Windows，以后会考虑跨平台。
 
 例如生成 TinyTCPServer 项目后，执行文件会生成在 `根目录\bin\Win32\Debug\TinyTCPServer.exe`，双击即可运行服务器在本机地址 4567 端口上。
 
-## 项目顺序
+## 服务器/客户端版本
+
+服务器版本和客户端版本从 1.0 开始迭代，一步一步加功能，具体可以切换 branch 分支看看每个版本的实现。不同版本注重的知识点不同，笔记也会有所增删。
+
+## 项目结构
 
 1. [HelloSocket](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/HelloSocket)
 
@@ -24,11 +28,11 @@ Windows，以后会考虑跨平台。
 
 2. [TinyTCPServer](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/TinyTCPServer)
 
-   一个简单的只会返回信息的 TCP 服务器
+   一个简单的 TCP 服务器，具体到 [TinyTCPServer/README.md](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/TinyTCPServer/README.md) 查看笔记。
 
 3. [TinyTCPClient](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/TinyTCPClient)
 
-   一个简单的只会发送数据的 TCP 客户端
+   一个简单的 TCP 客户端
 
 ## 参考
 

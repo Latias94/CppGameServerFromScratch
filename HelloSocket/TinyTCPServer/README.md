@@ -8,7 +8,7 @@
 
 ![](https://i.loli.net/2019/06/30/5d180a159178922393.png)
 
-文件可以参考 commit 版本
+其他版本文件可以参考 branch 版本
 
 服务端 [Server.cpp](https://github.com/Latias94/CppGameServerFromScratch/blob/93cbb090dfd240e9cc517c84c04db900b8b0b0eb/HelloSocket/TinyTCPServer/Server.cpp)
 
@@ -22,13 +22,7 @@
 
 ![](https://i.loli.net/2019/06/30/5d1816ca39a6852989.png)
 
-文件可以参考 commit 版本
-
-服务端 [Server.cpp](https://github.com/Latias94/CppGameServerFromScratch/blob/ae6db60378f9cf52e8127cb652e0da0ee554edf0/HelloSocket/TinyTCPServer/Server.cpp)
-
-客户端 [Client.cpp](https://github.com/Latias94/CppGameServerFromScratch/blob/ae6db60378f9cf52e8127cb652e0da0ee554edf0/HelloSocket/TinyTCPClient/Client.cpp)
-
-
+其他版本文件可以参考 branch 版本
 
 # 3. 发送结构化的网络消息数据
 
