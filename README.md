@@ -20,6 +20,10 @@ Windows，以后会考虑跨平台。
 
 服务器版本和客户端版本从 1.0 开始迭代，一步一步加功能，具体可以切换 branch 分支看看每个版本的实现。不同版本注重的知识点不同，笔记也会有所增删。
 
+![](https://i.loli.net/2019/07/01/5d195b2fae3be96970.png)
+
+master branch 维护最新版本的服务端、客户端和 [Changelog](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/TinyTCPServer/README.md)。
+
 ## 项目结构
 
 1. [HelloSocket](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/HelloSocket)
@@ -28,7 +32,7 @@ Windows，以后会考虑跨平台。
 
 2. [TinyTCPServer](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/TinyTCPServer)
 
-   一个简单的 TCP 服务器，具体到 [TinyTCPServer/README.md](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/TinyTCPServer/README.md) 查看笔记。
+   一个简单的 TCP 服务器，具体到 [TinyTCPServer/README.md](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/TinyTCPServer/README.md) 查看笔记，版本的修改信息也在里面。
 
 3. [TinyTCPClient](https://github.com/Latias94/CppGameServerFromScratch/blob/master/HelloSocket/TinyTCPClient)
 
