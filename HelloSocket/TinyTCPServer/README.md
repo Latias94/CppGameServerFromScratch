@@ -34,4 +34,4 @@
 
 起初这个版本服务器和客户端把报文分成包头（消息类型、消息包大小）和包体（数据），一次请求用两次 `send ` 函数分别发送包头和包体，接收请求也要分成两次，这样增加了出错的机率。后来把包头和包体结合成一个结构，这样一开始读取包头判断消息类型后，`recv ` 函数要注意接收的消息 buffer 初始读取位置以及读取的包体大小。
 
-项目请参考 branch：[03.server1.2-client1.2](https://github.com/Latias94/CppGameServerFromScratch/tree/03.server1.2-client1.2)
+项目请参考 branch：[03-server1.2-client1.2](https://github.com/Latias94/CppGameServerFromScratch/tree/03-server1.2-client1.2)
