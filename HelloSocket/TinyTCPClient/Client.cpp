@@ -6,6 +6,69 @@
 #include <winsock2.h>
 #include <stdio.h>
 
+// 网络数据报文的格式定义，需要和服务器端保持一致
+
+// 消息类型
+enum CMD
+{
+	CMD_LOGIN,
+	CMD_LOGIN_RESULT,
+	CMD_LOGOUT,
+	CMD_LOGOUT_RESULT,
+	CMD_ERROR
+};
+
+// 包头：描述本次消息包的大小，描述数据的作用
+struct DataHeader
+{
+	short dataLength;
+	short cmd;
+};
+
+// 包体： 数据
+struct Login :public DataHeader
+{
+	Login()
+	{
+		dataLength = sizeof(Login);
+		cmd = CMD_LOGIN;
+	}
+	char userName[32];
+	char password[32];
+};
+
+struct LoginResult :public DataHeader
+{
+	LoginResult()
+	{
+		dataLength = sizeof(LoginResult);
+		cmd = CMD_LOGIN_RESULT;
+		result = 0; // 0 为登录错误，1 为登录成功
+	}
+	int result;
+};
+
+struct Logout :public DataHeader
+{
+	Logout()
+	{
+		dataLength = sizeof(Logout);
+		cmd = CMD_LOGOUT;
+	}
+	char userName[32];
+};
+
+struct LogoutResult :public DataHeader
+{
+	LogoutResult()
+	{
+		dataLength = sizeof(LogoutResult);
+		cmd = CMD_LOGOUT_RESULT;
+		result = 0; // 0 为登出错误，1 为登出成功
+	}
+	int result;
+};
+
 int main()
 {
 	WORD ver = MAKEWORD(2, 2);
@@ -15,8 +78,6 @@ int main()
 	//-- 简易 TCP 客户端
 
 	// 1. 建立一个 socket
-	// 监听和接收连接的过程时不对称的。只有被动的服务器需要一个监听 socket。
-	// 希望发起连接的客户端应该创建 socket，并使用 connect 函数开始与远程服务器的握手过程。 
 	SOCKET _sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (INVALID_SOCKET == _sock)
 	{
@@ -34,8 +95,6 @@ int main()
 	_sin.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
 
 	// 调用 connect 函数通过给目的主机发送初始 SYN 数据包来启动 TCP 握手
-	// 如果目的主机（e.g. 服务器）有绑定到适当端口的监听 socket，目的主机将调用 accept 函数来继续握手过程。
-	// 默认情况下，connect 函数将阻塞调用线程，直到连接被接受，或者超时。
 	int ret = connect(_sock, (sockaddr*)& _sin, sizeof(sockaddr_in));
 	if (SOCKET_ERROR == ret)
 	{
@@ -58,25 +117,32 @@ int main()
 		{
 			break;
 		}
-		else
+		else if (0 == strcmp(cmdBuf, "login"))
 		{
 			// 5. 向服务端发送请求
-			send(_sock, cmdBuf, strlen(cmdBuf) + 1, 0);
+			Login login;
+			strcpy(login.userName, "admin");
+			strcpy(login.password, "pwd");
+			
+			send(_sock, (char*)& login, sizeof(Login), 0);
+			// 接收服务器返回的数据
+			LoginResult res = {};
+			recv(_sock, (char*)& res, sizeof(LoginResult), 0);
+			printf("LoginResult: %d\n", res.result);
 		}
-
-		// 6. 接收服务器信息
-
-		// 如果 recv 函数调用成功，返回接受的数据大小，这个值小于等于参数 len。
-		// 当 len 非零时，如果 recv 返回 0，说明连接的另外一端发送了一个 FIN 数据包，承诺没有更多需要发送的数据。
-		// 当 len 为零时，如果 recv 返回 0，说明 socket 上有可以读的数据。
-		// 当有很多 socket 在使用时，这是检查是否有数据到来而不需要占用单独缓冲区的一个简便方法。
-		// 当 recv 函数已经表明有可用的数据时，你可以保留一个缓冲区，然后再次调用 recv 函数，输入这个缓冲区和非零的 len。
-		// 默认情况下，如果 socket 的接收缓冲区中没有数据，recv 函数阻塞调用线程，直到数据流的下一组数据到达，或者超时。
-		char recvBuf[256] = {};
-		int nlen = recv(_sock, recvBuf, 128, 0);
-		if (nlen > 0)
+		else if (0 == strcmp(cmdBuf, "logout"))
 		{
-			printf("接收到数据：%s\n", recvBuf);
+			Logout logout;
+			strcpy(logout.userName, "admin");
+			send(_sock, (char*)& logout, sizeof(Logout), 0);
+			// 接收服务器返回的数据
+			LoginResult res = {};
+			recv(_sock, (char*)& res, sizeof(LogoutResult), 0);
+			printf("LogoutResult: %d\n", res.result);
+		}
+		else
+		{
+			printf("不支持的命令，请重新输入。\n");
 		}
 	}
 
