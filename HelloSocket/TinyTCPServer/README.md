@@ -36,9 +36,15 @@
 
 项目请参考 branch：[03-server1.2-client1.2](https://github.com/Latias94/CppGameServerFromScratch/tree/03-server1.2-client1.2)
 
-# 服务端升级为select模型处理多客户端
+# 4. 服务端升级为select模型处理多客户端
 
 ![](https://i.loli.net/2019/07/01/5d19b897f237976923.png)
+
+![](https://i.loli.net/2019/07/02/5d1ad18dc881255704.png)
+
+用了 Select 后可以同时处理多个客户端，且支持跨平台。
+
+项目请参考 branch：[04-server1.3-client1.2](https://github.com/Latias94/CppGameServerFromScratch/tree/04-server1.3-client1.2)
 
 ## I/O 模型
 
@@ -78,16 +84,12 @@ Unix下可用的 5 种 I/O 模型：
 
 进程阻塞于 `select` 调用，等待数据报套接字变为可读。当 `select` 返回“套接字可读”这一条件时，我们调用`recvfrom` 把所读数据报复制到应用进程缓冲区。
 
-## Select
+### Select
 
 socket 库提供了同时检查多个 socket 的方式，只要其中有一个 socket 准备好了就开始执行，我们可以使用 `select` 函数实现这个操作。
 
 具体参数解释参考 `Server.cpp` 的注释
 
-![](https://i.loli.net/2019/07/02/5d1ad18dc881255704.png)
-
-用了 Select 后可以同时处理多个客户端，且支持跨平台。
-
-### 参考：
+## 参考：
 
 [《UNIX网络编程 卷1：套接字联网API（第3版）》](https://book.douban.com/subject/26434583/) 第六章
