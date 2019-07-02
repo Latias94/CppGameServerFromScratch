@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <stdio.h>
+#include <thread>
 
 // 网络数据报文的格式定义，需要和服务器端保持一致
 
@@ -15,6 +16,7 @@ enum CMD
 	CMD_LOGIN_RESULT,
 	CMD_LOGOUT,
 	CMD_LOGOUT_RESULT,
+	CMD_NEW_USER_JOIN,
 	CMD_ERROR
 };
 
@@ -26,7 +28,7 @@ struct DataHeader
 };
 
 // 包体： 数据
-struct Login :public DataHeader
+struct Login :public DataHeader // 消息报结构直接继承包头结构，这样可以直接在构造函数直接初始化包头
 {
 	Login()
 	{
@@ -69,6 +71,100 @@ struct LogoutResult :public DataHeader
 	int result;
 };
 
+struct NewUserJoin :public DataHeader
+{
+	NewUserJoin()
+	{
+		dataLength = sizeof(LogoutResult);
+		cmd = CMD_NEW_USER_JOIN;
+		socketId = 0;
+	}
+	int socketId;
+};
+
+int handleSocket(SOCKET _sock)
+{
+	// 用缓冲区来接收数据 为了适应固长数据和变长数据。现在还不处理粘包、分包的问题
+	char szRecz[4096] = {};
+	// 先读取包头数据，判断消息的类型。
+	int nLen = recv(_sock, szRecz, sizeof(DataHeader), 0);
+	DataHeader* header = (DataHeader*)szRecz;
+
+	// 当 len 非零时，如果 recv 返回 0，说明连接的另外一端发送了一个 FIN 数据包，承诺没有更多需要发送的数据。
+	if (nLen <= 0)
+	{
+		printf("与服务器断开连接，任务结束\n");
+		return -1;
+	}
+
+	switch (header->cmd)
+	{
+	case CMD_LOGIN_RESULT:
+	{
+		// 由于已经接收了包头，buffer 需要从包体开头读取，取包体数据。数据长度 len 应该是总数据包大小减去包头大小
+		recv(_sock, szRecz + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+		LoginResult* loginResult = (LoginResult*)szRecz;
+		printf("接收到服务器的消息：CMD_LOGIN_RESULT，数据长度：%d\n", loginResult->dataLength);
+	}
+	break;
+	case CMD_LOGOUT_RESULT:
+	{
+		recv(_sock, szRecz + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+		LogoutResult* logoutResult = (LogoutResult*)szRecz;
+		printf("接收到服务器的消息：CMD_LOGOUT_RESULT，数据长度：%d\n", logoutResult->dataLength);
+	}
+	break;
+	case CMD_NEW_USER_JOIN:
+	{
+		recv(_sock, szRecz + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
+		NewUserJoin* joinResult = (NewUserJoin*)szRecz;
+		printf("接收到服务器的消息：CMD_NEW_USER_JOIN，数据长度：%d\n", joinResult->dataLength);
+	}
+	break;
+	}
+	return 0;
+}
+
+
+bool g_bRun = true;
+
+// 把输入命令的逻辑放到子线程中，这样的话需要 g_bRun 全局变量来判断程序是否要退出
+void cmdThread(SOCKET _sock)
+{
+	while (true)
+	{
+		char cmdBuf[128] = {};
+		// scanf 是阻塞函数，需要在其他线程中使用，否则会阻塞主循环
+		scanf("%s", cmdBuf);
+
+		if (0 == strcmp(cmdBuf, "exit"))
+		{
+			printf("退出程序\n");
+			g_bRun = false;
+			break;
+		}
+		else if (0 == strcmp(cmdBuf, "login"))
+		{
+			Login login;
+			strcpy(login.userName, "admin");
+			strcpy(login.password, "pwd");
+
+			send(_sock, (char*)& login, sizeof(Login), 0);
+		}
+		else if (0 == strcmp(cmdBuf, "logout"))
+		{
+			Logout logout;
+			strcpy(logout.userName, "admin");	
+
+			send(_sock, (char*)& logout, sizeof(Logout), 0);
+		}
+		else
+		{
+			printf("不支持的命令。\n");
+		}
+	}
+}
+
 int main()
 {
 	WORD ver = MAKEWORD(2, 2);
@@ -105,45 +201,39 @@ int main()
 		printf("connect 连接套接字成功\n");
 	}
 
-	while (true)
-	{
-		// 3. 输入请求命令
-		char cmdBuf[128] = {};
-		scanf("%s", cmdBuf);
+	// 启动线程，第二个参数能给函数传参
+	std::thread t1(cmdThread, _sock);
+	// 让子线程与主线程分离，否则主线程退出但子线程仍然 attach 主线程会出错。
+	t1.detach();
 
-		// 4. 处理请求
-		// 如果输入 exit 则退出客户端程序
-		if (0 == strcmp(cmdBuf, "exit"))
+	while (g_bRun)
+	{
+		// 转用 select 网络模型
+		fd_set fdRead;
+		FD_ZERO(&fdRead);
+		FD_SET(_sock, &fdRead);
+		// 定义了 timeval 的作用：等待一段固定时间。在有一个描述符准备好 I/O 时返回，但是不超过由该参数所指向的 timeval 结构中指定的秒数和微秒数。
+		// 也就是说与赋值 0 相比，这样不会再阻塞客户端，可以 select 的同时处理其他事情。
+		timeval t = { 1,0 };
+		int ret = select(_sock, &fdRead, 0, 0, &t);
+		if (ret < 0)
 		{
+			printf("select 任务结束。\n");
 			break;
 		}
-		else if (0 == strcmp(cmdBuf, "login"))
+
+		if (FD_ISSET(_sock, &fdRead))
 		{
-			// 5. 向服务端发送请求
-			Login login;
-			strcpy(login.userName, "admin");
-			strcpy(login.password, "pwd");
-			
-			send(_sock, (char*)& login, sizeof(Login), 0);
-			// 接收服务器返回的数据
-			LoginResult res = {};
-			recv(_sock, (char*)& res, sizeof(LoginResult), 0);
-			printf("LoginResult: %d\n", res.result);
+			FD_CLR(_sock, &fdRead);
+			if (-1 == handleSocket(_sock))
+			{
+				printf("select 任务结束，与服务器断开连接。\n");
+				break;
+			}
 		}
-		else if (0 == strcmp(cmdBuf, "logout"))
-		{
-			Logout logout;
-			strcpy(logout.userName, "admin");
-			send(_sock, (char*)& logout, sizeof(Logout), 0);
-			// 接收服务器返回的数据
-			LoginResult res = {};
-			recv(_sock, (char*)& res, sizeof(LogoutResult), 0);
-			printf("LogoutResult: %d\n", res.result);
-		}
-		else
-		{
-			printf("不支持的命令，请重新输入。\n");
-		}
+
+
+		// Sleep(1000); // 只适用于 Windows
 	}
 
 	// 7. 关闭套接字 socket

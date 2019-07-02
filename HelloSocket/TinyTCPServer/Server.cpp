@@ -21,6 +21,7 @@ enum CMD
 	CMD_LOGIN_RESULT,
 	CMD_LOGOUT,
 	CMD_LOGOUT_RESULT,
+	CMD_NEW_USER_JOIN,
 	CMD_ERROR
 };
 
@@ -75,6 +76,17 @@ struct LogoutResult :public DataHeader
 	int result;
 };
 
+struct NewUserJoin :public DataHeader
+{
+	NewUserJoin()
+	{
+		dataLength = sizeof(LogoutResult);
+		cmd = CMD_NEW_USER_JOIN;
+		socketId = 0;
+	}
+	int socketId;
+};
+
 std::vector<SOCKET> g_clients;
 
 int handleSocket(SOCKET _recvSock)
@@ -89,7 +101,7 @@ int handleSocket(SOCKET _recvSock)
 	// 当 len 非零时，如果 recv 返回 0，说明连接的另外一端发送了一个 FIN 数据包，承诺没有更多需要发送的数据。
 	if (nLen <= 0)
 	{
-		printf("Socket %d 客户端已退出，\n", (int)_recvSock);
+		printf("Socket %d 客户端已退出。\n", (int)_recvSock);
 		return -1;
 	}
 	// 6. 处理请求
@@ -109,7 +121,7 @@ int handleSocket(SOCKET _recvSock)
 		// 由于改用了缓冲区来储存返回数据，现在直接拿到缓冲区的指针来获得包体数据
 		Login* login = (Login*)szRecz;
 
-		printf("接收到的命令：CMD_LOGIN，数据长度：%d，userName=%s，password=%s\n", login->dataLength, login->userName, login->password);
+		printf("接收到 Socket %d 客户端的命令：CMD_LOGIN，数据长度：%d，userName=%s，password=%s\n", (int)_recvSock, login->dataLength, login->userName, login->password);
 
 		// 暂时不判断密码对错
 		LoginResult res;
@@ -122,7 +134,7 @@ int handleSocket(SOCKET _recvSock)
 		recv(_recvSock, szRecz + sizeof(DataHeader), header->dataLength - sizeof(DataHeader), 0);
 		Logout* logout = (Logout*)szRecz;
 
-		printf("接收到的命令：CMD_LOGOUT，数据长度：%d，userName=%s\n", logout->dataLength, logout->userName);
+		printf("接收到 Socket %d 客户端的命令：CMD_LOGOUT，数据长度：%d，userName=%s\n", (int)_recvSock, logout->dataLength, logout->userName);
 		LogoutResult res;
 		send(_recvSock, (char*)& res, sizeof(LogoutResult), 0);
 
@@ -252,9 +264,19 @@ int main()
 			{
 				printf("Error: accept 接收到无效 socket\n");
 			}
-			printf("新客户端加入：Socket = %d, IP = %s \n", (int)_recvSock, inet_ntoa(clientAddr.sin_addr));
-			// 用 vector 动态数组将客户端 socket 保存起来
-			g_clients.push_back(_recvSock);
+			else
+			{
+				// 新客户端加入后，群发消息给其他客户端
+				for (int n = (int)g_clients.size() - 1; n >= 0; n--)
+				{
+					NewUserJoin userJoin;
+					send(g_clients[n], (char*)& userJoin, sizeof(NewUserJoin), 0);
+				}
+
+				printf("新客户端加入：Socket = %d, IP = %s \n", (int)_recvSock, inet_ntoa(clientAddr.sin_addr));
+				// 用 vector 动态数组将客户端 socket 保存起来
+				g_clients.push_back(_recvSock);
+			}
 		}
 
 		// select 函数返回后，如果有客户端 socket 可读，则处理其 socket

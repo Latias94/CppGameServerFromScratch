@@ -36,7 +36,7 @@
 
 项目请参考 branch：[03-server1.2-client1.2](https://github.com/Latias94/CppGameServerFromScratch/tree/03-server1.2-client1.2)
 
-# 4. 服务端升级为select模型处理多客户端
+# 4. 服务端升级为 select 模型处理多客户端
 
 ![](https://i.loli.net/2019/07/01/5d19b897f237976923.png)
 
@@ -70,7 +70,7 @@ Unix下可用的 5 种 I/O 模型：
 
 进程把一个套接字设置成非阻塞是在通知内核：当所请求的 I/O 操作非得把本进程投入睡眠才能完成时，不要把本进程投入睡眠，而是返回一个错误。
 
-![](C:\Users\narut\AppData\Roaming\Typora\typora-user-images\1561969374542.png)
+![](https://i.loli.net/2019/07/02/5d1afc61d8b4996041.png)
 
 前三次调用 `recvfrom` 时没有数据可返回，因此内核转而立即返回一个`EWOULDBLOCK` 错误。
 第四次调用 `recvfrom` 时已有一个数据报准备好，它被复制到应用进程缓冲区，于是 `recvfrom` 成功返回。我们接着处理数据。
@@ -93,3 +93,9 @@ socket 库提供了同时检查多个 socket 的方式，只要其中有一个 s
 ## 参考：
 
 [《UNIX网络编程 卷1：套接字联网API（第3版）》](https://book.douban.com/subject/26434583/) 第六章
+
+# 5. 客户端也升级为 select 模型
+
+![](https://i.loli.net/2019/07/02/5d1b0068dced498611.png)
+
+除了给客户端像服务端一样的改用 select 模型之外，由于 `scanf` 函数是会阻塞线程，我们需要给命令输入多创建一个子线程，这样不会阻塞主循环的网络请求。
