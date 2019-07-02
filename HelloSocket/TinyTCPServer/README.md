@@ -22,7 +22,7 @@
 
 # 3. 发送结构化的网络消息数据
 
-![](C:\Users\narut\AppData\Roaming\Typora\typora-user-images\1561871313076.png)
+![](https://i.loli.net/2019/07/02/5d1b02760ebaa88358.png)
 
 前一个版本服务器只能发送字符串，这个版本使用结构体来封装数据。
 
@@ -70,7 +70,7 @@ Unix下可用的 5 种 I/O 模型：
 
 进程把一个套接字设置成非阻塞是在通知内核：当所请求的 I/O 操作非得把本进程投入睡眠才能完成时，不要把本进程投入睡眠，而是返回一个错误。
 
-![](C:\Users\narut\AppData\Roaming\Typora\typora-user-images\1561969374542.png)
+![](https://i.loli.net/2019/07/02/5d1afc61d8b4996041.png)
 
 前三次调用 `recvfrom` 时没有数据可返回，因此内核转而立即返回一个`EWOULDBLOCK` 错误。
 第四次调用 `recvfrom` 时已有一个数据报准备好，它被复制到应用进程缓冲区，于是 `recvfrom` 成功返回。我们接着处理数据。

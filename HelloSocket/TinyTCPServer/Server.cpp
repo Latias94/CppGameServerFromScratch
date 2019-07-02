@@ -251,10 +251,13 @@ int main()
 			if (INVALID_SOCKET == _recvSock)
 			{
 				printf("Error: accept 接收到无效 socket\n");
+			} 
+			else 
+			{
+				printf("新客户端加入：Socket = %d, IP = %s \n", (int)_recvSock, inet_ntoa(clientAddr.sin_addr));
+				// 用 vector 动态数组将客户端 socket 保存起来
+				g_clients.push_back(_recvSock);
 			}
-			printf("新客户端加入：Socket = %d, IP = %s \n", (int)_recvSock, inet_ntoa(clientAddr.sin_addr));
-			// 用 vector 动态数组将客户端 socket 保存起来
-			g_clients.push_back(_recvSock);
 		}
 
 		// select 函数返回后，如果有客户端 socket 可读，则处理其 socket
