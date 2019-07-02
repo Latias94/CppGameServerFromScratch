@@ -41,4 +41,5 @@ master branch 维护最新版本的服务端、客户端和 [Changelog](https://
 ## 参考
 
 * [《网络多人游戏架构与编程》](https://book.douban.com/subject/27135506/)—— [美] Joshua Glazer & Sanjay Madhav
+* [《UNIX网络编程 卷1：套接字联网API（第3版）》](https://book.douban.com/subject/26434583/) ——[美] W. Richard Stevens & Bill Fenner & Andrew M. Rudoff
 * 课程：C++百万并发网络通信引擎架构与实现
