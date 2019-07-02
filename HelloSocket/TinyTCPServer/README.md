@@ -22,7 +22,7 @@
 
 # 3. 发送结构化的网络消息数据
 
-![](C:\Users\narut\AppData\Roaming\Typora\typora-user-images\1561871313076.png)
+![](https://i.loli.net/2019/07/02/5d1b02760ebaa88358.png)
 
 前一个版本服务器只能发送字符串，这个版本使用结构体来封装数据。
 
@@ -99,3 +99,5 @@ socket 库提供了同时检查多个 socket 的方式，只要其中有一个 s
 ![](https://i.loli.net/2019/07/02/5d1b0068dced498611.png)
 
 除了给客户端像服务端一样的改用 select 模型之外，由于 `scanf` 函数是会阻塞线程，我们需要给命令输入多创建一个子线程，这样不会阻塞主循环的网络请求。
+
+项目请参考 branch：[05-server1.3-client1.3](https://github.com/Latias94/CppGameServerFromScratch/tree/05-server1.3-client1.3)
